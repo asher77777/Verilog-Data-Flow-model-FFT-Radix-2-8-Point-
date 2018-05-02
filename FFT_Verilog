@@ -1,0 +1,200 @@
+module FFT_radix_2_verilog(out0_re,out0_im,out1_re,out1_im,out2_re,out2_im,out3_re,out3_im,out4_re,out4_im,out5_re,out5_im,out6_re,out6_im,out7_re,out7_im,
+x0_re,x0_im,x1_re,x1_im,x2_re,x2_im,x3_re,x3_im,x4_re,x4_im,x5_re,x5_im,x6_re,x6_im,x7_re,x7_im);
+//Inputs both real and imaginary compnents calculated idependently
+//Input samples are 9-bit signed numbers , 8-bit magnitude and 1 MSB-bit sign 
+input [8:0]x0_re,x0_im,x1_re,x1_im,x2_re,x2_im,x3_re,x3_im,x4_re,x4_im,x5_re,x5_im,x6_re,x6_im,x7_re,x7_im;
+//Ouputs both real and imaginary components 
+//Output samples are 10-bit signed numbers , 9-bit magnitude and 1 MSB-bit sign 
+output  [9:0]out0_re,out0_im,out1_re,out1_im,out2_re,out2_im,out3_re,out3_im,out4_re,out4_im,out5_re,out5_im,out6_re,out6_im,out7_re,out7_im;
+//Intermediate Signals 
+wire [9:0]z0_re,z0_im,z1_re,z1_im,z2_re,z2_im,z3_re,z3_im,z4_re,z4_im,z5_re,z5_im,z6_re,z6_im,z7_re,z7_im;
+//Twiddle Factors
+wire[8:0]w0_8re,w0_8im;
+wire[8:0]w1_8re,w1_8im;
+wire[8:0]w2_8re,w2_8im;
+wire[8:0]w3_8re,w3_8im;
+//convesion of twiddle facrors from real to 9-bit two's complement bianry numbers
+assign w0_8re=9'b01;
+assign w0_8im=9'b00;
+assign w1_8re=9'b010110111;
+assign w1_8im=9'b101001001;
+assign w2_8re=9'b00;
+assign w2_8im=9'b111111111;
+assign w3_8re=9'b101001001;
+assign w3_8im=9'b101001001;
+//Intermediate signals
+wire [9:0] xb0_re,xb0_im,xb1_re,xb1_im,xb2_re,xb2_im,xb3_re,xb3_im,xb4_re,xb4_im,xb5_re,xb5_im,xb6_re,xb6_im,xb7_re,xb7_im;
+wire [9:0] y0_re,y0_im,y1_re,y1_im,y2_re,y2_im,y3_re,y3_im,y4_re,y4_im,y5_re,y5_im,y6_re,y6_im,y7_re,y7_im;
+wire [9:0]x3m_re,x3m_im, x7m_re,x7m_im,z5m_re,z5m_im,z6m_re,z6m_im,z7m_re,z7m_im;
+///compex multiplication intermediate signals
+wire [16:0]x3m0,x3m1;    wire xsm0,xsm1;
+wire [16:0]x3m2,x3m3;    wire xsm2,xsm3;
+wire [16:0]x7m0,x7m1;    wire xs7m0,xs7m1;
+wire [16:0]x7m2,x7m3;    wire xs7m2,xs7m3;
+wire [16:0]z5m0,z5m1;    wire zsm0,zsm1;
+wire [16:0]z5m2,z5m3;    wire zsm2,zsm3;
+wire [16:0]z6m0,z6m1;    wire z6sm0,z6sm1;
+wire [16:0]z6m2,z6m3;    wire z6sm2,z6sm3;
+wire [16:0]z7m0,z7m1;    wire z7sm0,z7sm1;
+wire [16:0]z7m2,z7m3;    wire z7sm2,z7sm3;
+///butterfly stage 01 
+btf  b0(xb0_re,xb0_im,xb1_re,xb1_im,x0_re,x0_im,x4_re,x4_im);
+btf  b1(xb2_re,xb2_im,xb3_re,xb3_im,x2_re,x2_im,x6_re,x6_im);
+btf  b2(xb4_re,xb4_im,xb5_re,xb5_im,x1_re,x1_im,x5_re,x5_im);
+btf  b3(xb6_re,xb6_im,xb7_re,xb7_im,x3_re,x3_im,x7_re,x7_im);
+/*********************************************************************************************/
+assign x3m0=(xb3_re[9]?~xb3_re[8:0]+1:xb3_re[8:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign xsm0=xb3_re[9]+w2_8re[8];
+assign x3m1=(xb3_im[9]?~xb3_im[8:0]+1:xb3_im[8:0])*(w2_8im[8:0]?~w2_8im[7:0]+1:w2_8im[7:0]);
+assign xsm1=xb3_im[9]+w2_8im[8];
+assign x3m_re={xsm0,xsm0?(~x3m0[7:0]+1):x3m0[7:0]}+{xsm1,xsm1?(~x3m1[7:0]+1):x3m1[7:0]};
+/**********************************************************************************************/
+assign x3m2=(xb3_re[9]?~xb3_re[8:0]+1:xb3_re[8:0])*(w2_8im[8]?~w2_8im[7:0]+1:w2_8im[7:0]);
+assign xsm2=xb3_re[9]+w2_8im[8];
+assign x3m3=(xb3_im[9]?~xb3_im[8:0]+1:xb3_im[8:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign xsm3=xb3_im[9]+w2_8re[8];
+assign x3m_im={xsm2,xsm2?(~x3m2[7:0]+1):x3m2[7:0]}+{xsm3,xsm1?(~x3m3[7:0]+1):x3m3[7:0]};
+/***********************************************************************************************/
+assign x7m0=(xb7_re[9]?~xb7_re[7:0]+1:xb7_re[7:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign xs7m0=xb7_re[9]+w2_8re[8];
+assign x7m1=(xb7_im[9]?~xb7_im[8:0]+1:xb7_im[8:0])*(w2_8im[8:0]?~w2_8im[7:0]+1:w2_8im[7:0]);
+assign xs7m1=xb7_im[9]+w2_8im[8];
+assign x7m_re={xs7m0,xs7m0?(~x7m0[7:0]+1):x7m0[7:0]}-{xs7m1,xs7m1?(~x7m1[7:0]+1):x7m1[7:0]};
+/*****************************************************************************************************/
+assign x7m2=(xb7_re[9]?~xb7_re[7:0]+1:xb7_re[7:0])*(w2_8im[8]?~w2_8im[7:0]+1:w2_8im[7:0]);
+assign xs7m2=xb7_re[9]+w2_8im[8];
+assign x7m3=(xb7_im[9]?~xb7_im[7:0]+1:xb7_im[7:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign xs7m3=xb7_im[9]+w2_8re[8];
+assign x7m_im={xs7m2,xs7m2?(~x7m2[7:0]+1):x7m2[7:0]}+{xs7m3,xsm3?(~x7m3[7:0]+1):x7m3[7:0]};
+/**********Stage -1 Outputs intermediate Signals **********************************************************************************************/
+assign y0_re=xb0_re; 
+assign y0_im=xb0_im;
+assign y1_re=xb1_re; 
+assign y1_im=xb1_im;
+assign y2_re=xb2_re; 
+assign y2_im=xb2_im;
+assign y3_re={x3m_re[7:0]};
+assign y3_im={x3m_im[7:0]};
+assign y4_re=xb4_re; 
+assign y4_im=xb4_im;
+assign y5_re=xb5_re; 
+assign y5_im=xb5_im;
+assign y6_re=xb6_re; 
+assign y6_im=xb6_im;
+assign y7_re=x7m_re[7:0]; 
+assign y7_im={x7m_im[7:0]};
+/**********stage-2* Inputs****************************************************************************************************/
+assign z0_re=y0_re+y2_re;
+assign z0_im=y0_im+y2_im;
+assign z1_re=y1_re+y3_re;
+assign z1_im=y1_im+y3_im;
+assign z2_re=(~y2_re+1)+y0_re;
+assign z2_im=(~y2_im+1)+y0_im;
+assign z3_re=y1_re+(~y3_re+1);
+assign z3_im=y1_im+(~y3_im+1);
+assign z4_re=y6_re+y4_re;
+assign z4_im=y6_im+y4_im;
+assign z5_re=y7_re+y5_re;
+assign z5_im=y7_im+y5_im;
+assign z6_re=(~y6_re+1)+y4_re;
+assign z6_im=(~y6_im+1)+y4_im;
+assign z7_re=(~y7_re+1)+y5_re;
+assign z7_im=(~y7_im+1)+y5_im;
+/***********************************complex multiplications*********************************************************/
+assign z5m0=(z5_re[9]?~z5_re[8:0]+1:z5_re[8:0])*(w1_8re[8]?~w1_8re[7:0]+1:w1_8re[7:0]);
+assign zsm0=z5_re[9]+w1_8re[8];
+wire [9:0]z5_imr;
+wire [7:0]tw;
+assign tw=(w1_8im[8:0]?~w1_8im[7:0]+1:w1_8im[7:0]);
+assign z5_imr=(z5_im[9]?~z5_im[8:0]+1:z5_im[8:0]);
+assign z5m1=z5_imr*tw;
+assign zsm1=z5_im[9]+w1_8im[8];
+assign z5m_re={zsm0,zsm0?(~z5m0[15:8]+1):z5m0[15:8]}-{zsm1,zsm1?(~z5m1[15:8]+1):z5m1[15:8]};
+/******************************complex multiplications***************************************************************/
+assign z5m2=(z5_re[9]?~z5_re[8:0]+1:z5_re[8:0])*tw;
+assign zsm2=z5_re[9]+w1_8im[8];
+assign z5m3=z5_imr*tw;
+assign zsm3=z5_im[9]+w1_8re[8];
+assign z5m_im={zsm2,zsm2?(~z5m2[15:8]+1):z5m2[15:8]}+{zsm3,zsm3?(~z5m3[15:8]+1):z5m3[15:8]};
+/********************************************complex multiplications***********************************************/
+assign z6m0=(z6_re[9]?~z6_re[8:0]+1:z6_re[8:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign z6sm0=z6_re[9]+w2_8re[8];
+///////////////
+assign z6m1=(z6_im[9]?~z6_im[8:0]+1:z6_im[8:0])*(w2_8im[8:0]?~w2_8im[7:0]+1:w2_8im[7:0]);
+assign z6sm1=z6_im[9]+w2_8im[8];
+
+assign z6m_re={z6sm0,z6sm0?(~z6m0[8:0]+1):z6m0[7:0]}-{z6sm1,z6sm1?(~z6m1[8:0]+1):z6m1[8:0]};
+/**********************************************complex multiplications***********************************************/
+assign z6m2=(z6_re[9]?~z6_re[8:0]+1:z6_re[8:0])*9'b01;
+assign z6sm2=z6_re[9]+w2_8im[8];
+
+assign z6m3=(z6_im[9]?~z6_im[8:0]+1:z6_im[8:0])*(w2_8re[8]?~w2_8re[7:0]+1:w2_8re[7:0]);
+assign z6sm3=z6_im[9]+w2_8re[8];
+assign z6m_im={z6sm2,z6sm2?(~z6m2[8:0]+1):z6m2[8:0]}+{z6sm3,z6sm3?(~z6m3[8:0]+1):z6m3[8:0]};
+
+/******************************complex multiplications***************************************************************/
+assign z7m0=(z7_re[9]?~z7_re[9:0]+1:z7_re[8:0])*8'b10110111;   
+assign z7sm0=z7_re[9]+w3_8re[8];
+wire [9:0]z7_imr;
+assign z7_imr=(z7_im[9]?(~z7_im[9:0])+1:z7_im[8:0]);
+assign z7m1=z7_imr*8'b10110111 ;    /*(w3_8im[8:0]?~w3_8im[7:0]+1:w3_8im[7:0]);*/
+assign z7sm1=z7_im[9]+w3_8im[8];
+assign z7m_re={z7sm0,z7sm0?(~z7m0[15:8]+1):z7m0[15:8]}-{z7sm1,z7sm1?(~z7m1[15:8]+1):z7m1[15:8]};
+/**************************************complex multiplications***********************************************************/
+assign z7m2=(z7_re[9]?~z7_re[8:0]+1:z7_re[8:0])*8'b10110111;
+assign z7sm2=z7_re[9]+w3_8im[8];
+assign z7m3=z7_imr*8'b10110111;
+assign z7sm3=z7_im[9]+w3_8re[8];
+assign z7m_im={z7sm2,z7sm2?(~z7m2[15:8]+1):z7m2[15:8]}+{z7sm3,z7sm3?(~z7m3[15:8]+1):z7m3[15:8]};
+/*************************************************************************************************************************/
+//Outputs both real and Imginary  
+assign out0_re=z0_re+z4_re;
+assign out0_im=z0_im+z4_im;
+
+assign out1_re=z1_re+z5m_re;
+assign out1_im=z1_im+z5m_im;
+
+assign out2_re=z2_re+z6m_re;
+assign out2_im=z2_im+z6m_im;
+
+assign out3_re=z3_re+z7m_re;
+assign out3_im=z3_im+z7m_im;
+
+
+assign out4_re=z0_re+(~z4_re+1);
+assign out4_im=z0_im+(~z4_im+1);
+
+assign out5_re=z1_re+(~z5m_re+1);
+assign out5_im=z1_im+(~z5m_im+1);
+
+assign out6_re=z2_re+(~z6m_re+1);
+assign out6_im=z2_im+(~z6m_im+1);
+
+assign out7_re=z3_re+(~z7m_re+1);
+assign out7_im=z3_im+(~z7m_im+1);
+
+endmodule 
+
+/*****************Butterfly Stage-1 Unit******************************************************************************************/
+module btf (xp_r,xp_im,xc_r,xc_im,x1_r,x1_im,x2_r,x2_im);
+input [8:0]x1_r,x1_im,x2_r,x2_im;
+output reg [9:0]xp_r=0,xp_im=0;
+output reg [9:0]xc_r=0,xc_im=0;
+wire [8:0]x2c;
+assign x2c[8:0]=~(x2_r)+1;
+reg [8:0]xcc=0;
+reg xs=0;
+always@(x1_r,x2_r)begin 
+case({x1_r[8],x2_r[8]})
+11,00: begin xp_r[8:0]=x1_r+x2_r; xp_r[9]=x1_r[8]&&x2_r[8]; end 
+01,10: begin if (x1_r[7:0]>x2_r[7:0])begin xp_r[8:0]=x1_r[7:0]-x2_r[7:0];xp_r[9]=x1_r[8];end else begin xp_r[8:0]=x2_r[7:0]-x1_r[7:0]; xp_r[9]=x2_r[8]; end end 
+endcase
+if(x2c[8]==x1_r[8])begin
+xc_r[8:0]=x2c[7:0]+x1_r[7:0]; 
+xc_r[9]=x2c[8]&&x1_r[8]; end 
+else if (x2c[8]+x1_r[8])begin 
+xcc[8:0]=x2c[8:0]+x1_r[8:0];if (xcc[8])  xs=xcc[8];  xc_r={xs,xcc};        end 
+else begin xc_r=xc_r; xp_r=xp_r;end 
+xp_im=0; xc_im=0;
+end 
+endmodule
