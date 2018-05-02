@@ -1,0 +1,40 @@
+module tb_fft();
+//Outputs
+wire [9:0]out0_re,out0_im,out1_re,out1_im,out2_re,out2_im,out3_re,out3_im,out4_re,out4_im,out5_re,out5_im,out6_re,out6_im,out7_re,out7_im;
+//Inputs
+reg  [8:0]x0_re,x0_im,x1_re,x1_im,x2_re,x2_im,x3_re,x3_im,x4_re,x4_im,x5_re,x5_im,x6_re,x6_im,x7_re,x7_im;
+//module instantiation
+FFT_radix_2_verilog testb(out0_re,out0_im,out1_re,out1_im,out2_re,out2_im,out3_re,out3_im,out4_re,out4_im,out5_re,out5_im,out6_re,out6_im,out7_re,out7_im,
+x0_re,x0_im,x1_re,x1_im,x2_re,x2_im,x3_re,x3_im,x4_re,x4_im,x5_re,x5_im,x6_re,x6_im,x7_re,x7_im);
+//Apply sample inpus after 10 time units 
+initial fork
+////////////Sampl-Inputs////////////
+//x[0]
+#10 x0_re=128;
+#10 x0_im=0;
+//x[1]
+#10 x1_re=45;
+#10 x1_im=0;
+//x[2]
+#10 x2_re=21;
+#10 x2_im=0;
+//x[3]
+#10 x3_re=148;
+#10 x3_im=0;
+//x[4]
+#10 x4_re=61;
+#10 x4_im=0;
+//x[5]
+#10 x5_re=0;
+#10 x5_im=0;
+//x[6]
+#10 x6_re=255;
+#10 x6_im=0;
+//x[7]
+#10 x7_re=200;
+#10 x7_im=0;
+
+join
+
+endmodule
+
